@@ -134,9 +134,9 @@ exports.saveContract = async (req, res) => {
 };
 
 exports.shareContract = async (req, res) => {
-  const { contractId, associateName, associateEmail, sharedBy } = req.body;
-  if (!contractId || !associateName || !associateEmail || !sharedBy) {
-    return res.status(404).json({ message: 'Contract ID, associate name, email, and sharedBy are required.' });
+  const { contractId, associateEmail, sharedBy } = req.body;
+  if (!contractId || !associateEmail || !sharedBy) {
+    return res.status(404).json({ message: 'Contract ID, email, and sharedBy are required.' });
   }
   try {
     const contract = await Contract.findById(contractId);

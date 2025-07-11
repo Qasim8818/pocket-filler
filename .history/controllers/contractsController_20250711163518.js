@@ -126,7 +126,6 @@ exports.saveContract = async (req, res) => {
       return res.status(404).json({ message: 'Contract not found.' });
     }
     res.status(200).json({ message: 'Contract saved successfully.', contract });
-    console.log("contract saved", contract);
   } catch (error) {
     console.error('Error saving contract:', error);
     res.status(500).json({ message: 'Failed to save contract.' });
@@ -134,9 +133,9 @@ exports.saveContract = async (req, res) => {
 };
 
 exports.shareContract = async (req, res) => {
-  const { contractId, associateName, associateEmail, sharedBy } = req.body;
-  if (!contractId || !associateName || !associateEmail || !sharedBy) {
-    return res.status(404).json({ message: 'Contract ID, associate name, email, and sharedBy are required.' });
+  const { contractId, associateEmail, sharedBy } = req.body;
+  if (!contractId || !associateEmail || !sharedBy) {
+    return res.status(404).json({ message: 'Contract ID, email, and sharedBy are required.' });
   }
   try {
     const contract = await Contract.findById(contractId);

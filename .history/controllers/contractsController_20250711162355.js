@@ -65,8 +65,8 @@ exports.uploadContracts = [
       }
       contract.contractFile = req.file.path;
       await contract.save();
-      res.status(200).json({ message: 'Contract file uploaded successfully.', contract });
       console.log("contract uploaded", contract)
+      res.status(200).json({ message: 'Contract file uploaded successfully.', contract });
     } catch (error) {
       console.error('Error uploading contract file:', error);
       res.status(500).json({ message: 'Failed to upload contract file.' });
@@ -107,7 +107,6 @@ exports.uploadSignature = [
       contract.signatureFile = req.file.path;
       await contract.save();
       res.status(200).json({ message: 'Signature uploaded successfully.', contract });
-      console.log("signature uploaded", contract);
     } catch (error) {
       console.error('Error uploading signature:', error);
       res.status(500).json({ message: 'Failed to upload signature.' });
@@ -126,7 +125,6 @@ exports.saveContract = async (req, res) => {
       return res.status(404).json({ message: 'Contract not found.' });
     }
     res.status(200).json({ message: 'Contract saved successfully.', contract });
-    console.log("contract saved", contract);
   } catch (error) {
     console.error('Error saving contract:', error);
     res.status(500).json({ message: 'Failed to save contract.' });
@@ -134,9 +132,9 @@ exports.saveContract = async (req, res) => {
 };
 
 exports.shareContract = async (req, res) => {
-  const { contractId, associateName, associateEmail, sharedBy } = req.body;
-  if (!contractId || !associateName || !associateEmail || !sharedBy) {
-    return res.status(404).json({ message: 'Contract ID, associate name, email, and sharedBy are required.' });
+  const { contractId, associateEmail, sharedBy } = req.body;
+  if (!contractId || !associateEmail || !sharedBy) {
+    return res.status(404).json({ message: 'Contract ID, email, and sharedBy are required.' });
   }
   try {
     const contract = await Contract.findById(contractId);
@@ -148,8 +146,8 @@ exports.shareContract = async (req, res) => {
       contract.associates.push({ name: associateName, email: associateEmail, sharedBy });
       await contract.save();
     }
-    res.status(200).json({ message: 'Contract shared successfully.', contract });
     console.log("contract save", contract)
+    res.status(200).json({ message: 'Contract shared successfully.', contract });
   } catch (error) {
     console.error('Error sharing contract:', error);
     res.status(500).json({ message: 'Failed to share contract.' });
