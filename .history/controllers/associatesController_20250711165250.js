@@ -2,11 +2,17 @@ const Associate = require('../models/associates');
 const crypto = require('crypto');
 
 
-const { createTransporter, sendMail } = require('./authController');
+const nodemailer = require('nodemailer');
 
 async function sendInvitationEmail(email, name, invitationLink) {
   try {
-    const transporter = createTransporter();
+    let transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
@@ -15,12 +21,10 @@ async function sendInvitationEmail(email, name, invitationLink) {
       text: `Hello ${name || ''},\n\nYou have been invited to join Pocketfiller. Please use the following link to accept the invitation:\n\n${invitationLink}\n\nBest regards,\nPocketfiller Team`,
     };
 
-    let info = await sendMail(mailOptions);
-    console.log(`Invitation email sent to ${email}: ${info.response}`);
-    return true;
+    await transporter.sendMail(mailOptions);
+    console.log(`Invitation email sent to ${email}`);
   } catch (error) {
     console.error('Error sending invitation email:', error);
-    return false;
   }
 }
 
