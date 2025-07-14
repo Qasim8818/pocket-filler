@@ -38,38 +38,6 @@ exports.listProjects = async (req, res) => {
 };
 
 /**
- * Add a new project
- */
-exports.addProject = async (req, res) => {
-  const { title, type, description } = req.body;
-
-  if (!title || !type || !description) {
-    return res.status(400).json({ message: 'Project title, type, and description are required.' });
-  }
-
-  try {
-    const newProject = new Project({
-      title,
-      type,
-      description,
-      date: new Date(),
-      status: 'In-Progress',
-      clients: [],
-      activities: [],
-      chatMessages: [],
-      documents: [],
-    });
-
-    await newProject.save();
-
-    res.status(201).json({ message: 'Project added successfully.', project: newProject });
-  } catch (error) {
-    console.error('Error adding project:', error);
-    res.status(500).json({ message: 'Failed to add project.' });
-  }
-};
-
-/**
  * Get project details by ID
  */
 exports.getProjectDetails = async (req, res) => {

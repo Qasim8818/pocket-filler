@@ -11,8 +11,4 @@ router.post('/reset-password-request', authController.resetPasswordRequest);
 router.post('/reset-password-confirm/:resetToken', authController.resetPasswordConfirm); 
 router.post('/update-profile', authController.updateProfile);
 
-// Organization account routes
-router.post('/organization-signup', authController.organizationSignup);
-router.post('/organization-login', authController.organizationLogin);
-
 module.exports = router;

@@ -4,16 +4,10 @@ const associatesController = require('../controllers/associatesController');
 
 router.post('/addUser', associatesController.addUser);
 router.post('/addManually', associatesController.addManually);
-router.post('/addClients', associatesController.addClients);
-router.get('/getClientRequests', associatesController.getClientRequests);
-router.post('/acceptClient/:clientId', associatesController.acceptClient);
-router.post('/rejectClient/:clientId', associatesController.rejectClient);
-router.get('/getClients', associatesController.getClients);
-router.delete('/removeClient/:clientId', associatesController.removeClient);
-
 router.get('/getAssociates', associatesController.getAssociates);
 router.delete('/removeAssociate/:associateId', associatesController.removeAssociate);
 router.get('/getStatus/:associateId', associatesController.getStatus);
+
 router.post('/acceptAssociate/:associateId', associatesController.acceptAssociate);
 router.post('/rejectAssociate/:associateId', associatesController.rejectAssociate);
 

@@ -10,7 +10,6 @@ const associatesRoutes = require("./routes/associatesRoutes");
 const subscriptionRoutes = require("./routes/subscriptionRoutes");
 const disputeRoutes = require("./routes/disputeRoutes");
 const projectsRoutes = require("./routes/projectsRoutes");
-const dashboardRoutes = require("./routes/dashboardRoutes");
 
 // Middleware
 app.use(express.json());
@@ -24,7 +23,6 @@ app.use("/api/associates", associatesRoutes);
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/dispute", disputeRoutes);
 app.use("/api/projects", projectsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
 
 // MongoDB connection
 const PORT = process.env.PORT || 3000;
