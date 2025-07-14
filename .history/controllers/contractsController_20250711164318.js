@@ -35,13 +35,13 @@ const uploadSignature = multer({ storage: signatureStorage });
 exports.addContracts = async (req, res) => {
   const { contractName, contractType } = req.body;
   if (!contractName || !contractType) {
-    return res.status(400).json({ message: 'Contract name and type are required.' });
+    return res.status(404).json({ message: 'Contract name and type are required.' });
   }
   try {
     const contract = new Contract({ contractName, contractType });
     await contract.save();
     res.status(201).json({ message: 'Contract created successfully.', contractId: contract._id });
-    console.log("Contract has been added", contract);
+    console.log("contract has been added", contract)
   } catch (error) {
     console.error('Error creating contract:', error);
     res.status(500).json({ message: 'Failed to create contract.' });
@@ -53,25 +53,26 @@ exports.uploadContracts = [
   async (req, res) => {
     const { contractId } = req.body;
     if (!req.file) {
-      return res.status(400).json({ message: 'Contract file is required.' });
+      return res.status(409).json({ message: 'Contract file is required.' });
     }
     if (!contractId) {
-      return res.status(400).json({ message: 'Contract ID is required.' });
+      return res.status(404).json({ message: 'Contract ID is required.' });
     }
     try {
       const contract = await Contract.findById(contractId);
       if (!contract) {
-        return res.status(404).json({ message: 'Contract not found.' });
+        return res.status(400).json({ message: 'Contract not found.' });
       }
       contract.contractFile = req.file.path;
       await contract.save();
       res.status(200).json({ message: 'Contract file uploaded successfully.', contract });
-      console.log("Contract uploaded", contract);
+      console.log("contract uploaded", contract)
     } catch (error) {
       console.error('Error uploading contract file:', error);
       res.status(500).json({ message: 'Failed to upload contract file.' });
     }
   }
+
 ];
 
 exports.previewContract = async (req, res) => {
@@ -93,10 +94,10 @@ exports.uploadSignature = [
   async (req, res) => {
     const { contractId } = req.body;
     if (!req.file) {
-      return res.status(400).json({ message: 'Signature file is required.' });
+      return res.status(404).json({ message: 'Signature file is required.' });
     }
     if (!contractId) {
-      return res.status(400).json({ message: 'Contract ID is required.' });
+      return res.status(404).json({ message: 'Contract ID is required.' });
     }
     try {
       const contract = await Contract.findById(contractId);
@@ -106,7 +107,7 @@ exports.uploadSignature = [
       contract.signatureFile = req.file.path;
       await contract.save();
       res.status(200).json({ message: 'Signature uploaded successfully.', contract });
-      console.log("Signature uploaded", contract);
+      console.log("signature uploaded", contract);
     } catch (error) {
       console.error('Error uploading signature:', error);
       res.status(500).json({ message: 'Failed to upload signature.' });
@@ -117,7 +118,7 @@ exports.uploadSignature = [
 exports.saveContract = async (req, res) => {
   const { contractId } = req.body;
   if (!contractId) {
-    return res.status(400).json({ message: 'Contract ID is required.' });
+    return res.status(409).json({ message: 'Contract ID is required.' });
   }
   try {
     const contract = await Contract.findById(contractId);
@@ -125,7 +126,7 @@ exports.saveContract = async (req, res) => {
       return res.status(404).json({ message: 'Contract not found.' });
     }
     res.status(200).json({ message: 'Contract saved successfully.', contract });
-    console.log("Contract saved", contract);
+    console.log("contract saved", contract);
   } catch (error) {
     console.error('Error saving contract:', error);
     res.status(500).json({ message: 'Failed to save contract.' });
@@ -135,7 +136,7 @@ exports.saveContract = async (req, res) => {
 exports.shareContract = async (req, res) => {
   const { contractId, associateName, associateEmail, sharedBy } = req.body;
   if (!contractId || !associateName || !associateEmail || !sharedBy) {
-    return res.status(400).json({ message: 'Contract ID, associate name, email, and sharedBy are required.' });
+    return res.status(404).json({ message: 'Contract ID, associate name, email, and sharedBy are required.' });
   }
   try {
     const contract = await Contract.findById(contractId);
@@ -148,7 +149,7 @@ exports.shareContract = async (req, res) => {
       await contract.save();
     }
     res.status(200).json({ message: 'Contract shared successfully.', contract });
-    console.log("Contract shared", contract);
+    console.log("contract save", contract)
   } catch (error) {
     console.error('Error sharing contract:', error);
     res.status(500).json({ message: 'Failed to share contract.' });
