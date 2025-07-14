@@ -93,15 +93,16 @@ exports.createPaymentIntent = async (req, res) => {
   }
 };
 
-exports.paySubscriptionAmount = async (req, res) => {
-  const { userId, clientSecret, cardNumber, expMonth, expYear, cvc } = req.body;
 
-  if (!userId || !clientSecret || !cardNumber || !expMonth || !expYear || !cvc) {
+exports.paySubscriptionAmount = async (req, res) => {
+  const { userId, amount, cardNumber, expMonth, expYear, cvc } = req.body;
+
+  if (!userId || !amount || !cardNumber || !expMonth || !expYear || !cvc) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    // Step 1: Create a payment method
+    // Step 1: Create a payment method from raw card details
     const paymentMethod = await stripe.paymentMethods.create({
       type: 'card',
       card: {
@@ -112,32 +113,27 @@ exports.paySubscriptionAmount = async (req, res) => {
       },
     });
 
-    // Step 2: Confirm the existing payment intent with the client secret
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      clientSecret.split('_secret')[0] // Extract PaymentIntent ID from clientSecret
-    );
-
-    if (!paymentIntent) {
-      return res.status(404).json({ message: 'PaymentIntent not found' });
-    }
-
-    const confirmedIntent = await stripe.paymentIntents.confirm(paymentIntent.id, {
+    // Step 2: Create and confirm the payment intent
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100), // Stripe works in cents
+      currency: 'usd',
       payment_method: paymentMethod.id,
+      confirm: true,
     });
 
-    if (confirmedIntent.status !== 'succeeded') {
-      return res.status(402).json({ message: 'Payment failed', status: confirmedIntent.status });
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(402).json({ message: 'Payment failed' });
     }
 
-    // Step 3: Mark the subscription as Paid
+    // Step 3: Update the user's subscription to Paid and Active
     const subscription = await Subscription.findOneAndUpdate(
-      { userId, status: 'Active', paymentStatus: 'Unpaid' },
+      { userId, status: 'Active' },
       { paymentStatus: 'Paid', status: 'Active' },
       { new: true }
     );
 
     if (!subscription) {
-      return res.status(404).json({ message: 'Subscription not found or already paid' });
+      return res.status(404).json({ message: 'Subscription not found' });
     }
 
     res.status(200).json({

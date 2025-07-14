@@ -94,50 +94,29 @@ exports.createPaymentIntent = async (req, res) => {
 };
 
 exports.paySubscriptionAmount = async (req, res) => {
-  const { userId, clientSecret, cardNumber, expMonth, expYear, cvc } = req.body;
+  const { userId, clientSecret } = req.body;
 
-  if (!userId || !clientSecret || !cardNumber || !expMonth || !expYear || !cvc) {
+  if (!userId || !clientSecret) {
     return res.status(400).json({ message: 'Missing required fields' });
   }
 
   try {
-    // Step 1: Create a payment method
-    const paymentMethod = await stripe.paymentMethods.create({
-      type: 'card',
-      card: {
-        number: cardNumber,
-        exp_month: expMonth,
-        exp_year: expYear,
-        cvc: cvc,
-      },
-    });
+    // Fetch payment intent to confirm status
+    const paymentIntent = await stripe.paymentIntents.retrieve(clientSecret.split('_secret_')[0]);
 
-    // Step 2: Confirm the existing payment intent with the client secret
-    const paymentIntent = await stripe.paymentIntents.retrieve(
-      clientSecret.split('_secret')[0] // Extract PaymentIntent ID from clientSecret
-    );
-
-    if (!paymentIntent) {
-      return res.status(404).json({ message: 'PaymentIntent not found' });
+    if (paymentIntent.status !== 'succeeded') {
+      return res.status(402).json({ message: 'Payment not completed yet' });
     }
 
-    const confirmedIntent = await stripe.paymentIntents.confirm(paymentIntent.id, {
-      payment_method: paymentMethod.id,
-    });
-
-    if (confirmedIntent.status !== 'succeeded') {
-      return res.status(402).json({ message: 'Payment failed', status: confirmedIntent.status });
-    }
-
-    // Step 3: Mark the subscription as Paid
+    // Update subscription as Paid
     const subscription = await Subscription.findOneAndUpdate(
-      { userId, status: 'Active', paymentStatus: 'Unpaid' },
+      { userId, status: 'Active' },
       { paymentStatus: 'Paid', status: 'Active' },
       { new: true }
     );
 
     if (!subscription) {
-      return res.status(404).json({ message: 'Subscription not found or already paid' });
+      return res.status(404).json({ message: 'Subscription not found' });
     }
 
     res.status(200).json({
@@ -150,6 +129,7 @@ exports.paySubscriptionAmount = async (req, res) => {
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
+
 
 
 

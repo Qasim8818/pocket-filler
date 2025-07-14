@@ -8,8 +8,6 @@ const subscriptionSchema = new mongoose.Schema({
   endDate: { type: Date },
   status: { type: String, enum: ['Active', 'Cancelled', 'Expired'], default: 'Active' },
   paymentStatus: { type: String, enum: ['Paid', 'Unpaid'], default: 'Unpaid' },
-  paymentAmount: { type: Number, default: 0 },
-  paymentMethod: { type: String, default: 'Card' },
   createdAt: { type: Date, default: Date.now },
 });
 
