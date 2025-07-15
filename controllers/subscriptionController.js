@@ -6,53 +6,99 @@ const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
 // Create a new subscription
 exports.createSubscription = async (req, res) => {
   const { userId, planType, billingCycle } = req.body;
-
-  if (!userId || !planType) {
-    return res.status(400).json({ message: 'User ID and plan type are required' });
+  if (!planType) {
+    return res.status(400).json({ message: 'Plan type is required' });
   }
-
+  if (!billingCycle) {
+    return res.status(400).json({ message: 'Billing cycle is required' });
+  }
+  // Validate userId and planType
+  if (!userId) {
+    return res.status(400).json({ message: 'User ID is required' });
+  }
+  if (!planType) {
+    return res.status(400).json({ message: 'Plan type is required' });
+  }
+  // Validate billingCycle
+  if (!billingCycle) {
+    return res.status(400).json({ message: 'Billing cycle is required' });
+  }
+  // Validate planType
+  const validPlanTypes = ['Free', 'Pro', 'Ultimate'];
+  if (!validPlanTypes.includes(planType)) {
+    return res.status(400).json({ message: 'Invalid plan type' });
+  }
+  // Validate billingCycle
+  const validBillingCycles = ['Monthly', 'Yearly'];
+  if (!validBillingCycles.includes(billingCycle)) {
+    return res.status(400).json({ message: 'Invalid billing cycle' });
+  }
   // Define your actual pricing
   const pricing = {
     Free: { Monthly: 0, Yearly: 0 },
     Pro: { Monthly: 15, Yearly: 150 },
     Ultimate: { Monthly: 30, Yearly: 300 },
   };
-
+  // Default to Monthly if billingCycle is not provided
   const cycle = billingCycle || 'Monthly';
-
-  // Validate planType and billingCycle
+  // Check if the planType and cycle are valid
   if (!pricing[planType] || !pricing[planType][cycle]) {
     return res.status(400).json({ message: 'Invalid planType or billingCycle' });
   }
-
-  const paymentAmount = pricing[planType][cycle];
-
+  // Check if the user already has an active subscription
+  const existingSubscription = await Subscription.findOne({ userId, status: 'Active' });
+  if (existingSubscription) {
+    return res.status(409).json({ message: 'User already has an active subscription' });
+  }
+  // Create a new subscription
+  const subscription = new Subscription({
+    subscriptionId: new mongoose.Types.ObjectId(),
+    userId,
+    planType,
+    billingCycle: cycle,
+    startDate: new Date(),
+    endDate: new Date(new Date().setFullYear(new Date().getFullYear() + (cycle === 'Yearly' ? 1 : 0))),
+    status: 'Active',
+    trialPeriod: false, // Assuming no trial period for simplicity
+    trialEndDate: null,
+    cancellationDate: null,
+    cancellationReason: '',
+    lastPaymentDate: null,
+    nextBillingDate: new Date(new Date().setMonth(new Date().getMonth() + (cycle === 'Monthly' ? 1 : 12))),
+    autoRenew: true,
+    isActive: true,
+    isTrialActive: false,
+    isCancelled: false,
+    isPaused: false,
+    pauseStartDate: null,
+    pauseEndDate: null,
+    pauseReason: '',
+    pauseDuration: 0,
+    discountCode: '',
+    paymentIntentId: '',
+    paymentMethod: 'Card',
+    paymentStatus: 'Unpaid',
+    paymentAmount: pricing[planType][cycle],
+    paymentCurrency: 'USD',
+    paymentDetails: '',
+    createdBy: req.user._id, // Assuming the user is authenticated and their ID is
+    updatedBy: req.user._id, // Assuming the user is authenticated and their ID is available
+    updatedByRole: req.user.role || 'associate', // Assuming role is available in user
+    updatedById: req.user._id, // ID of the user who last updated the subscription
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    createdBy: req.user._id, // User who created the subscription
+  });
   try {
-    const existingSubscription = await Subscription.findOne({ userId, status: 'Active' });
-    if (existingSubscription) {
-      return res.status(409).json({ message: 'User already has an active subscription' });
-    }
-
-    const subscription = new Subscription({
-      userId,
-      planType,
-      billingCycle: cycle,
-      startDate: new Date(),
-      status: 'Active',
-      paymentStatus: paymentAmount === 0 ? 'Paid' : 'Unpaid', // auto-mark free plan as Paid
-      paymentAmount,
-      paymentMethod: 'Card',
-    });
-
     await subscription.save();
-    console.log("Subscription created:", subscription);
-    res.status(201).json({ message: 'Subscription created successfully', subscription });
-
+    console.log("Subscription has been created", subscription);
+    res.status(201).json({ message: 'Subscription created successfully.', subscription });
   } catch (error) {
     console.error('Error creating subscription:', error);
-    res.status(500).json({ message: 'Failed to create subscription' });
+    res.status(500).json({ message: 'Failed to create subscription.' });
   }
 };
+  
 exports.createPaymentIntent = async (req, res) => {
   const { userId, planType, billingCycle } = req.body;
 

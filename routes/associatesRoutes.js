@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const associatesController = require('../controllers/associatesController');
 
+
 // Route to add a new user by invitation
 router.post('/addUser', associatesController.addUser);
 
@@ -40,5 +41,6 @@ router.post('/acceptAssociate/:associateId', associatesController.acceptAssociat
 
 // Route to reject an associate request by associate ID
 router.post('/rejectAssociate/:associateId', associatesController.rejectAssociate);
+
 
 module.exports = router;

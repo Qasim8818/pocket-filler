@@ -3,7 +3,6 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -111,44 +110,36 @@ exports.organizationSignup = async (req, res) => {
   const { username, organizationName, email, password } = req.body;
 
   if (!username || !organizationName || !email || !password) {
-    return res
-      .status(404)
-      .json({
-        message: "Organization name, email, and password are required.",
-      });
+    return res.status(404).json({ message: 'Organization name, email, and password are required.' });
   }
 
-  if (!email.includes("@") || !email.includes(".")) {
-    return res.status(404).json({ message: "Invalid email format." });
+  if (!email.includes('@') || !email.includes('.')) {
+    return res.status(404).json({ message: 'Invalid email format.' });
   }
 
   try {
     const existingOrg = await Auth.findOne({ email });
     if (existingOrg) {
-      return res.status(409).json({ message: "Email already registered." });
+      return res.status(409).json({ message: 'Email already registered.' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
     const verificationCode = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit code
     const verificationCodeExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
 
-    console.log(
-      "Organization Signup - verificationCode:",
-      verificationCode,
-      "expires at:",
-      verificationCodeExpires
-    );
+    console.log('Organization Signup - verificationCode:', verificationCode, 'expires at:', verificationCodeExpires);
 
     const organization = new Auth({
+      username,
+      organizationName,
       email,
       password: hashedPassword,
       isEmailVerified: false,
       verificationCode,
       verificationCodeExpires,
-      roles: ["user"],
-      isOrganization: false,
-      organizationName: organizationName || null,
-      contactNumber: req.body.contactNumber || null,
+      isOrganization: true,
+      organizationId: mongoose.Types.ObjectId(organizationId) : null,
+      organization:  mongoose.Types.ObjectId(organizationId) : null,
     });
 
     await organization.save();
@@ -156,40 +147,29 @@ exports.organizationSignup = async (req, res) => {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: "Your 4-digit verification code for organization account",
+      subject: 'Your 4-digit verification code for organization account',
       text: `Hello ${organizationName},\n\nYour verification code is: ${verificationCode}\nIt expires in 15 minutes.\n\nThank you!`,
     };
 
     await sendMail(mailOptions);
 
     res.status(201).json({
-      message:
-        "Organization registration successful. Please check your email for the verification code.",
-      organization: [
-        {
-          username,
-          email,
-          password: hashedPassword,
-
-          isEmailVerified: false,
-          verificationCode,
-          verificationCodeExpires,
-          roles: ["user"],
-          isOrganization: false,
-          organizationName: organizationName || null,
-          organizationId: organizationId || null,
-          organization: organizationId
-            ? mongoose.Types.ObjectId(organizationId)
-            : null,
-          contactNumber: req.body.contactNumber || null,
-        },
-      ],
+      message: 'Organization registration successful. Please check your email for the verification code.',
+      organization: [{
+        username: organization.username,
+        organizationName: organization.organizationName,
+        email: organization.email,
+        isEmailVerified: organization.isEmailVerified,
+        organizationRole: organization.organizationRole,
+        organizationId: organization.id,
+        roles: organization.roles,
+        isOrganization: organization.isOrganization,
+        contactNumber: organization.contactNumber || null,
+      }],
     });
   } catch (error) {
-    console.error("Organization signup error:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred during organization signup." });
+    console.error('Organization signup error:', error);
+    res.status(500).json({ message: 'An error occurred during organization signup.' });
   }
 };
 
@@ -231,10 +211,12 @@ exports.organizationLogin = async (req, res) => {
     }
 
     if (!organization.isEmailVerified) {
-      return res.status(403).json({
-        message:
-          "Email not verified. Please verify your email before logging in.",
-      });
+      return res
+        .status(403)
+        .json({
+          message:
+            "Email not verified. Please verify your email before logging in.",
+        });
     }
 
     const token = jwt.sign(
@@ -357,10 +339,12 @@ exports.login = async (req, res) => {
     }
 
     if (!user.isEmailVerified) {
-      return res.status(403).json({
-        message:
-          "Email not verified. Please verify your email before logging in.",
-      });
+      return res
+        .status(403)
+        .json({
+          message:
+            "Email not verified. Please verify your email before logging in.",
+        });
     }
 
     const token = jwt.sign(
@@ -479,9 +463,11 @@ exports.resetPasswordConfirm = async (req, res) => {
     });
   } catch (error) {
     console.error("Reset password confirmation error:", error);
-    res.status(500).json({
-      message: "An error occurred during password reset confirmation.",
-    });
+    res
+      .status(500)
+      .json({
+        message: "An error occurred during password reset confirmation.",
+      });
   }
 };
 
@@ -553,8 +539,83 @@ exports.updateProfile = async (req, res) => {
       .status(500)
       .json({ message: "An error occurred during profile update." });
   }
-  // Remove nested exports from here. These should be defined at the top level, not inside updateProfile.
+
+  exports.getProfile = async (req, res) => {
+    const { userId } = req.user.body;
+    if (!userId) {
+      res.status(409).json({ message: "User ID is required." });
+    } else {
+      try {
+        const user = await Auth.findById(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found." });
+        }
+        res.status(200).json({
+          message: "Profile retrieved successfully.",
+          user: {
+            fullName: user.fullName,
+            email: user.email,
+            contactNumber: user.contactNumber,
+            profilePicture: user.profilePicture,
+            organizationName: user.organizationName,
+            organizationId: user.organizationId,
+            isOrganization: user.isOrganization,
+            userId: user._id,
+            roles: user.roles || [],
+            isEmailVerified: user.isEmailVerified,
+            isUser: user.isUser,
+            organizationRole: user.organizationRole || "user",
+            organization: user.organization || null,
+            userType: user.isOrganization ? "organization" : "user",
+            isVerified: user.isVerified || false,
+          },
+        });
+      } catch (error) {
+        console.error("Profile retrieval error:", error);
+        res
+          .status(500)
+          .json({ message: "An error occurred during profile retrieval." });
+      }
+    }
   };
+  exports.getOrganizationProfile = async (req, res) => {
+    const { organizationId } = req.organization.body;
+    if (!organizationId) {
+      return res.status(400).json({ message: "Organization ID is required." });
+    }
+    try {
+      const organization = await Auth.findById(organizationId);
+      if (!organization || !organization.isOrganization) {
+        return res.status(404).json({ message: "Organization not found." });
+      }
+      res.status(200).json({
+        message: "Organization profile retrieved successfully.",
+        organization: {
+          organizationName: organization.organizationName,
+          email: organization.email,
+          contactNumber: organization.contactNumber,
+          profilePicture: organization.profilePicture,
+          organizationId: organization._id,
+          roles: organization.roles || [],
+          isEmailVerified: organization.isEmailVerified,
+          isOrganization: organization.isOrganization,
+          userType: "organization",
+          organizationRole: organization.organizationRole || "organization",
+          isVerified: organization.isVerified || false,
+          isUser: organization.isUser || false,
+        },
+      });
+    } catch (error) {
+      console.error("Error retrieving organization profile:", error);
+      res
+        .status(500)
+        .json({
+          message:
+            "An error occurred while retrieving the organization profile.",
+        });
+    }
+  };
+};
 
 exports.getProfile = async (req, res) => {
   const { userId } = req.body;
@@ -623,8 +684,10 @@ exports.getOrganizationProfile = async (req, res) => {
     });
   } catch (error) {
     console.error("Error retrieving organization profile:", error);
-    res.status(500).json({
-      message: "An error occurred while retrieving the organization profile.",
-    });
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while retrieving the organization profile.",
+      });
   }
 };

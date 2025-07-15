@@ -20,4 +20,10 @@ router.post('/saveContract', contractsController.saveContract);
 // Route to share a contract with an associate
 router.post('/shareContract', contractsController.shareContract);
 
+// Route to get all contracts
+router.get('/getAllContracts', contractsController.getAllContracts);
+// Route to get a contract by ID
+router.get('/getContractById/:contractId', contractsController.getContractById);
+
+
 module.exports = router;

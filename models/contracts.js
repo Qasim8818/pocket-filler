@@ -21,6 +21,37 @@ const contractSchema = new mongoose.Schema({
   signatureFile: {
     type: String, // path to uploaded signature file
   },
+  contractDescription: { type: String },
+  contractValue: { type: Number, default: 0 },
+  contractDuration: { type: String, enum: ['short-term', 'long-term'], default: 'short-term' },
+  contractStatus: { type: String, enum: ['active', 'completed', 'cancelled'], default: 'active' },
+  contractDetails: { type: String },
+  contractFile: { type: String }, // path to the contract file
+  contractSignature: { type: String }, // path to the signature file
+  contractSigned: { type: Boolean, default: false },
+  contractSignedDate: { type: Date },
+  contractReviewed: { type: Boolean, default: false },
+  contractReviewedDate: { type: Date },
+  contractReviewedStatus: { type: String, enum: ['approved', 'rejected'], default: 'approved' },
+  contractReviewedByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  contractReviewedByAssociate: { type: mongoose.Schema.Types.ObjectId, ref: 'Associate' },
+  contractReviewedByClient: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
+  contractStartDate: { type: Date },
+  contractEndDate: { type: Date },
+  contractSignature: { type: String }, // path to the contract signature file
+  contractSigned: { type: Boolean, default: false },
+  contractSignedDate: { type: Date },
+  contractReviewed: { type: Boolean, default: false },
+  contractReviewedDate: { type: Date },
+  contractReviewedStatus: { type: String, enum: ['approved', 'rejected'], default: 'approved' },
+  contractReviewedByAdmin: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin' },
+  contractReviewedByAssociate: { type: mongoose.Schema.Types.ObjectId, ref: 'Associate    ' },
+  contractReviewedByClient: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
+  contractFilePath: { type: String }, // path to the contract file
+  contractSignaturePath: { type: String }, // path to the signature file
+  contractCreatedDate: { type: Date, default: Date.now },
+  contractUpdatedDate: { type: Date, default: Date.now },
+  contractId: { type: mongoose.Schema.Types.ObjectId, ref: 'Contract' },
   createdBy: { type: String }, // who created the contract
   associates: [associateSchema],
 }, {

@@ -33,20 +33,48 @@ exports.addUser = async (req, res) => {
     if (existingAssociate) {
       return res.status(409).json({ message: 'User already exists.' });
     }
+    
     const invitationToken = crypto.randomBytes(20).toString('hex');
     const invitationLink = `http://Pocketfiller/invite/${invitationToken}`;
     const associate = new Associate({ name, email, invitationLink, status: 'pending' });
-    await associate.save();
-
-    // Send invitation email
+    // Save the associate to the database
+    associate.invitationLink = invitationLink;
+    associate.status = 'pending';
+    associate.role = 'user'; // Default role can be set here
+    associate.profilePicture = 'default-profile.png'; // Default profile picture
+    associate.lastActive = Date.now();
+    associate.lastLogin = Date.now();
+    associate.isActive = true;
+    associate.createdAt = Date.now();
+    associate.updatedAt = Date.now();
+    associate.contractType = 'fixed'; // Default contract type
+    associate.hourlyRate = 0; // Default hourly rate
+    associate.fixedPrice = 0; // Default fixed price
+    associate.contractStartDate = null; // No contract start date initially
+    associate.contractEndDate = null; // No contract end date initially
+    associate.contractStatus = 'active'; // Default contract status
+    associate.contractDetails = ''; // No contract details initially
+    associate.contractFile = ''; // No contract file initially
+    associate.contractSignature = ''; // No contract signature initially
+    associate.contractSigned = false; // Contract not signed initially
+    associate.contractSignedDate = null; // No contract signed date initially
+    associate.contractReviewed = false; // Contract not reviewed initially
+    associate.contractReviewedDate = null; // No contract reviewed date initially
+    associate.contractReviewedStatus = 'approved'; // Default contract reviewed status
+    associate.contractReviewedByAdmin = null; // No admin reviewed initially
+    associate.contractReviewedByAssociate = null; // No associate reviewed initially
+    associate.contractReviewedByClient = null; // No client reviewed initially
+    // Save the associate to the database
     await sendInvitationEmail(email, name, invitationLink);
-
+    await associate.save();
+    // Log the invitation
     console.log("Invitation sent:", associate);
     res.status(200).json({ message: 'Invitation sent successfully.', associate });
   } catch (error) {
     console.error('Error adding user:', error);
     res.status(500).json({ message: 'Failed to add user.' });
   }
+
 };
 
 
@@ -60,7 +88,51 @@ exports.addManually = async (req, res) => {
     if (existingAssociate) {
       return res.status(409).json({ message: 'User already exists.' });
     }
+    // Create a new associate with default values
+    const invitationToken = crypto.randomBytes(20).toString('hex');
+    const invitationLink = `http://Pocketfiller/invite/${invitationToken}`;
+
+    // Create a new associate with default values
     const associate = new Associate({ email, status: 'pending' });
+    associate.invitationLink = invitationLink;
+    associate.status = 'pending';
+    associate.role = 'user'; // Default role can be set here
+    associate.profilePicture = 'default-profile.png'; // Default profile picture
+    associate.lastActive = Date.now();
+    associate.lastLogin = Date.now();
+    associate.isActive = true;
+    associate.createdAt = Date.now();
+    associate.updatedAt = Date.now();
+    associate.contractType = 'fixed'; // Default contract type
+    associate.hourlyRate = 0; // Default hourly rate  
+    associate.fixedPrice = 0; // Default fixed price
+    associate.contractStartDate = null; // No contract start date initially
+    associate.contractEndDate = null; // No contract end date initially
+    associate.contractStatus = 'active'; // Default contract status
+    associate.contractDetails = ''; // No contract details initially
+    associate.contractFile = ''; // No contract file initially
+    associate.contractSignature = ''; // No contract signature initially
+    associate.contractSigned = false; // Contract not signed initially
+    associate.contractSignedDate = null; // No contract signed date initially
+    associate.contractReviewed = false; // Contract not reviewed initially
+    associate.contractReviewedDate = null; // No contract reviewed date initially
+    associate.contractReviewedStatus = 'approved'; // Default contract reviewed status
+    associate.contractReviewedByAdmin = null; // No admin reviewed initially
+    associate.contractReviewedByAssociate = null; // No associate reviewed initially
+    associate.contractReviewedByClient = null; // No client reviewed initially
+    // Send invitation email
+    const emailSent = await sendInvitationEmail(email, null, invitationLink);
+    if (!emailSent) {
+      return res.status(500).json({ message: 'Failed to send invitation email.' });
+    }
+    // Set the invitation link
+    associate.invitationLink = invitationLink;
+    associate.status = 'pending'; // Set status to pending
+    associate.invitationCode = invitationToken; // Set the invitation code
+    associate.invitationDate = Date.now(); // Set the invitation date
+    associate.invitationAccepted = false; // Initially not accepted
+    associate.invitationRejected = false; // Initially not rejected
+    // Save the associate to the database
     await associate.save();
     console.log("associate added manually", associate)
     res.status(200).json({ message: 'Associate added manually.', associate });
@@ -86,6 +158,10 @@ exports.addClients = async (req, res) => {
     const invitationToken = crypto.randomBytes(20).toString('hex');
     const invitationLink = `http://Pocketfiller/invite/${invitationToken}`;
     const client = new Associate({ name, email, invitationLink, status: 'pending' });
+    client.invitationLink = invitationLink;
+    client.status = 'pending';
+    client.role = 'client'; // Default role for clients
+
     await client.save();
 
     // Send invitation email
@@ -126,6 +202,7 @@ exports.acceptClient = async (req, res) => {
       return res.status(404).json({ message: 'Client not found.' });
     }
     client.status = 'accepted';
+    
     await client.save();
     console.log("client accepted", client)
     res.status(200).json({ message: 'Client request accepted.', client });

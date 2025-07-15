@@ -41,9 +41,33 @@ exports.submitDispute = async (req, res) => {
       status: 'Open',
       messages: [],
       documents: [],
+      associateId: req.user._id, // Assuming the user is authenticated and their ID is available
+      contractId: req.body.contractId, // Assuming contractId is provided in the request body
+      title: req.body.title || 'Dispute Title', // Optional title, default if not provided
+      createdAt: new Date(),
+      updatedAt: new Date()
     });
 
+    // If files are uploaded, handle them
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        const fileUrl = `/uploads/${file.filename}`;
+        newDispute.documents.push({
+          url: fileUrl,
+          uploadedAt: new Date(),
+          uploadedBy: userId, // Assuming the user who created the dispute is the uploader
+          description: file.originalname, // Optional description
+          type: file.mimetype.split('/')[1], // Extracting type from MIME type
+          size: file.size, // Size in bytes
+          Filename: file.originalname, // Original filename
+          uploadedByRole: req.user.role || 'associate', // Assuming role is available in user object
+          uploadedById: userId // ID of the user who uploaded the document
+        });
+      });
+      newDispute.updatedAt = new Date();
+    }
     await newDispute.save();
+    
     console.log("dispute has been submitted", newDispute)
     res.status(201).json({ message: 'Your dispute has been submitted successfully.', dispute: newDispute });
   } catch (err) {
@@ -91,9 +115,11 @@ exports.addMessage = async (req, res) => {
     }
 
     dispute.messages.push({ senderId, message, timestamp: new Date() });
+    // Update the updatedAt field to the current date
     dispute.updatedAt = new Date();
-
+    // Save the updated dispute
     await dispute.save();
+
     console.log("message has been added to dispute", dispute)
     res.status(200).json({ message: 'Your message has been added.', dispute });
   } catch (err) {
@@ -125,6 +151,8 @@ exports.uploadDocuments = async (req, res) => {
       const fileUrl = `/uploads/${file.filename}`;
       dispute.documents.push({ url: fileUrl, uploadedAt: new Date() });
     });
+    // Update the updatedAt field to the current date
+
 
     dispute.updatedAt = new Date();
     await dispute.save();
@@ -153,13 +181,30 @@ exports.withdrawDispute = async (req, res) => {
     }
 
     dispute.status = 'Withdrawn';
+
     dispute.updatedAt = new Date();
 
+
     await dispute.save();
+
     console.log("dispute has been withdrawn", dispute)
     res.status(200).json({ message: 'Dispute has been withdrawn.', dispute });
   } catch (err) {
     console.error('Error withdrawing dispute:', err);
     res.status(500).json({ message: 'Could not withdraw dispute. Please try again.' });
+  }
+  exports.getAllDisputes = async (req, res) => {
+  try {
+    const disputes = await Dispute.find().populate('userId', 'fullName email').populate('associateId', 'fullName email').populate('contractId', 'title');
+
+    if (!disputes || disputes.length === 0) {
+      return res.status(404).json({ message: 'No disputes found.' });
+    }
+
+    res.status(200).json({ disputes });
+  } catch (err) {
+    console.error('Error retrieving disputes:', err);
+    res.status(500).json({ message: 'Failed to retrieve disputes. Please try again later.' });
+  }
   }
 };

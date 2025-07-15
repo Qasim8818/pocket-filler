@@ -3,7 +3,6 @@ const crypto = require("crypto");
 const bcrypt = require("bcrypt");
 const nodemailer = require("nodemailer");
 const jwt = require("jsonwebtoken");
-const mongoose = require("mongoose");
 
 function createTransporter() {
   return nodemailer.createTransport({
@@ -140,6 +139,7 @@ exports.organizationSignup = async (req, res) => {
     );
 
     const organization = new Auth({
+      fullName,
       email,
       password: hashedPassword,
       isEmailVerified: false,
@@ -148,6 +148,10 @@ exports.organizationSignup = async (req, res) => {
       roles: ["user"],
       isOrganization: false,
       organizationName: organizationName || null,
+      organizationId: organizationId || null,
+      organization: organizationId
+        ? mongoose.Types.ObjectId(organizationId)
+        : null,
       contactNumber: req.body.contactNumber || null,
     });
 
@@ -167,10 +171,9 @@ exports.organizationSignup = async (req, res) => {
         "Organization registration successful. Please check your email for the verification code.",
       organization: [
         {
-          username,
+          fullName,
           email,
           password: hashedPassword,
-
           isEmailVerified: false,
           verificationCode,
           verificationCodeExpires,
@@ -553,8 +556,80 @@ exports.updateProfile = async (req, res) => {
       .status(500)
       .json({ message: "An error occurred during profile update." });
   }
-  // Remove nested exports from here. These should be defined at the top level, not inside updateProfile.
+
+  exports.getProfile = async (req, res) => {
+    const { userId } = req.user.body;
+    if (!userId) {
+      res.status(409).json({ message: "User ID is required." });
+    } else {
+      try {
+        const user = await Auth.findById(userId);
+        if (!user) {
+          return res.status(404).json({ message: "User not found." });
+        }
+        res.status(200).json({
+          message: "Profile retrieved successfully.",
+          user: {
+            fullName: user.fullName,
+            email: user.email,
+            contactNumber: user.contactNumber,
+            profilePicture: user.profilePicture,
+            organizationName: user.organizationName,
+            organizationId: user.organizationId,
+            isOrganization: user.isOrganization,
+            userId: user._id,
+            roles: user.roles || [],
+            isEmailVerified: user.isEmailVerified,
+            isUser: user.isUser,
+            organizationRole: user.organizationRole || "user",
+            organization: user.organization || null,
+            userType: user.isOrganization ? "organization" : "user",
+            isVerified: user.isVerified || false,
+          },
+        });
+      } catch (error) {
+        console.error("Profile retrieval error:", error);
+        res
+          .status(500)
+          .json({ message: "An error occurred during profile retrieval." });
+      }
+    }
   };
+  exports.getOrganizationProfile = async (req, res) => {
+    const { organizationId } = req.organization.body;
+    if (!organizationId) {
+      return res.status(400).json({ message: "Organization ID is required." });
+    }
+    try {
+      const organization = await Auth.findById(organizationId);
+      if (!organization || !organization.isOrganization) {
+        return res.status(404).json({ message: "Organization not found." });
+      }
+      res.status(200).json({
+        message: "Organization profile retrieved successfully.",
+        organization: {
+          organizationName: organization.organizationName,
+          email: organization.email,
+          contactNumber: organization.contactNumber,
+          profilePicture: organization.profilePicture,
+          organizationId: organization._id,
+          roles: organization.roles || [],
+          isEmailVerified: organization.isEmailVerified,
+          isOrganization: organization.isOrganization,
+          userType: "organization",
+          organizationRole: organization.organizationRole || "organization",
+          isVerified: organization.isVerified || false,
+          isUser: organization.isUser || false,
+        },
+      });
+    } catch (error) {
+      console.error("Error retrieving organization profile:", error);
+      res.status(500).json({
+        message: "An error occurred while retrieving the organization profile.",
+      });
+    }
+  };
+};
 
 exports.getProfile = async (req, res) => {
   const { userId } = req.body;

@@ -41,10 +41,10 @@ exports.listProjects = async (req, res) => {
  * Add a new project
  */
 exports.addProject = async (req, res) => {
-  const { title, type, description } = req.body;
+  const { title, type, description, createdBy, organization } = req.body;
 
-  if (!title || !type || !description) {
-    return res.status(400).json({ message: 'Project title, type, and description are required.' });
+  if (!title || !type || !description || !createdBy || !organization) {
+    return res.status(400).json({ message: 'Project title, type, description, createdBy, and organization are required.' });
   }
 
   try {
@@ -58,6 +58,8 @@ exports.addProject = async (req, res) => {
       activities: [],
       chatMessages: [],
       documents: [],
+      createdBy,
+      organization,
     });
 
     await newProject.save();

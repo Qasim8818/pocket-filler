@@ -154,3 +154,27 @@ exports.shareContract = async (req, res) => {
     res.status(500).json({ message: 'Failed to share contract.' });
   }
 };
+
+exports.getAllContracts = async (req, res) => {
+  try {
+    const contracts = await Contract.find({});
+    res.status(200).json({ message: 'Contracts retrieved successfully.', contracts });
+  } catch (error) {
+    console.error('Error retrieving contracts:', error);
+    res.status(500).json({ message: 'Failed to retrieve contracts.' });
+  }
+};
+
+exports.getContractById = async (req, res) => {
+  const { contractId } = req.params;
+  try {
+    const contract = await Contract.findById(contractId);
+    if (!contract) {
+      return res.status(404).json({ message: 'Contract not found.' });
+    }
+    res.status(200).json({ message: 'Contract retrieved successfully.', contract });
+  } catch (error) {
+    console.error('Error retrieving contract:', error);
+    res.status(500).json({ message: 'Failed to retrieve contract.' });
+  }
+};

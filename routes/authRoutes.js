@@ -14,5 +14,7 @@ router.post('/update-profile', authController.updateProfile);
 // Organization account routes
 router.post('/organization-signup', authController.organizationSignup);
 router.post('/organization-login', authController.organizationLogin);
+router.get('/profile', authController.getProfile);
+router.get('/organization-profile', authMiddleware, authController.getOrganizationProfile);
 
 module.exports = router;
