@@ -177,7 +177,9 @@ exports.organizationSignup = async (req, res) => {
     await sendMail(mailOptions);
 
     res.status(201).json({
-      message: "Organization registration successful. Please check your email for the verification code.",
+      message:
+
+        "Organization registration successful. Please check your email for the verification code.",
       organization: {
         username: organization.username,
         organizationName: organization.organizationName,

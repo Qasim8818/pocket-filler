@@ -25,7 +25,7 @@ const authSchema = new mongoose.Schema({
     },
     username: {
         type: String,
-        required: false,
+        required: true,
     },
     profilePicture: {
         type: String,

@@ -19,16 +19,17 @@ async function sendMail(mailOptions) {
   const transporter = createTransporter();
   return new Promise((resolve, reject) => {
     transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
+      if (err){ {
         console.error("Failed to send email:", err);
         reject(err);
       } else {
-        console.log("Email successfully sent:", info.response);
+        console.log("Email sent successfully:", info);
         resolve(info);
-      }
-    });
-  });
-}
+        }
+        });
+        });
+        }
+
 
 // Signup: register a new user and send a 4-digit verification code via email
 exports.signup = async (req, res) => {
@@ -177,7 +178,9 @@ exports.organizationSignup = async (req, res) => {
     await sendMail(mailOptions);
 
     res.status(201).json({
-      message: "Organization registration successful. Please check your email for the verification code.",
+      message:
+
+        "Organization registration successful. Please check your email for the verification code.",
       organization: {
         username: organization.username,
         organizationName: organization.organizationName,

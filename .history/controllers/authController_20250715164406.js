@@ -112,29 +112,21 @@ exports.signup = async (req, res) => {
 // Organization signup endpoint: creates organization user and sends 4-digit verification code via email.
 
 exports.organizationSignup = async (req, res) => {
+  const { username, organizationName, email, password } = req.body;
 
-  const { username, organizationName, email, password, organizationId } = req.body;
-
-  if (!username) {
-    return res.status(400).json({ message: "Username is required." });
-  }
-
-  if (!organizationName || !email || !password) {
+  if (!username || !organizationName || !email || !password) {
     return res
-      .status(400)
+      .status(404)
       .json({
         message: "Organization name, email, and password are required.",
       });
   }
 
   if (!email.includes("@") || !email.includes(".")) {
-    return res.status(400).json({ message: "Invalid email format." });
+    return res.status(404).json({ message: "Invalid email format." });
   }
 
   try {
-    
-
-
     const existingOrg = await Auth.findOne({ email });
     if (existingOrg) {
       return res.status(409).json({ message: "Email already registered." });
@@ -152,16 +144,14 @@ exports.organizationSignup = async (req, res) => {
     );
 
     const organization = new Auth({
-      username,
-      organizationName,
       email,
-      organizationId,
       password: hashedPassword,
       isEmailVerified: false,
       verificationCode,
       verificationCodeExpires,
-      roles: ["organization"],
-      isOrganization: true,
+      roles: ["user"],
+      isOrganization: false,
+      organizationName: organizationName || null,
       contactNumber: req.body.contactNumber || null,
     });
 
@@ -177,18 +167,10 @@ exports.organizationSignup = async (req, res) => {
     await sendMail(mailOptions);
 
     res.status(201).json({
-      message: "Organization registration successful. Please check your email for the verification code.",
-      organization: {
-        username: organization.username,
-        organizationName: organization.organizationName,
-        email: organization.email,
-        isEmailVerified: organization.isEmailVerified,
-        organizationRole: organization.organizationRole,
-        organizationId: organization._id,
-        roles: organization.roles,
-        isOrganization: organization.isOrganization,
-        contactNumber: organization.contactNumber || null,
-      },
+      message:
+        "Organization registration successful. Please check your email for the verification code.",
+      
+
     });
   } catch (error) {
     console.error("Organization signup error:", error);
