@@ -6,31 +6,18 @@ exports.createSmartContract = async (req, res) => {
 
   if (!title || !totalAmount) {
     return res.status(400).json({ message: 'Title and total amount are required.' });
-  }
-
-  try {
-    // Generate sequential contractId
-    const lastContract = await SmartContract.findOne().sort({ _id: -1 });
-    const contractId = lastContract ? (lastContract.contractId || 0) + 1 : 1;
-    
+  }  try {
     const newContract = new SmartContract({
-      contractId,
       title,
       totalAmount,
-      status: 'In-Progress', // Valid enum value
-      createdBy: 1, // Sequential user ID
-      updatedBy: 1, // Sequential user ID
-      currency: 'USD', // Required field
-      contractType: 'employment', // Valid enum value
-      description: req.body.description || 'Contract description', // Required field
-      startDate: req.body.startDate || new Date(), // Required field
-      endDate: req.body.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Required field
-      budget: req.body.budget || totalAmount, // Required field
-      organization: req.body.organization || 'Default Organization', // Required field
-      associateId: 1, // Sequential ID
-      projectManagerId: 1, // Sequential ID
-      projectType: 'Internal', // Required field with valid enum
-      projectStatus: 'Active', // Required field with valid enum
+      status: 'Draft', // Default status
+      createdBy: req.user._id, // Assuming the user is authenticated and their ID is
+      updatedBy: req.user._id, // Assuming the user is authenticated and their ID is available
+      currency: 'USD', // Default currency, can be changed as needed
+      contractType: 'Standard', // Default contract type, can be changed as needed
+      description: req.body.description || '', // Optional description
+      startDate: req.body.startDate || new Date(), // Default to current date if not provided
+      endDate: req.body.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Default to one year from now if not provided
       priority: req.body.priority || 'Medium', // Default priority
       tags: req.body.tags || [], // Optional tags
       milestones: req.body.milestones || [], // Optional milestones
@@ -47,6 +34,7 @@ exports.createSmartContract = async (req, res) => {
       chatMessages: [], // Initialize with no chat messages
       createdAt: new Date(),
       updatedAt: new Date(),
+      associateId: req.body.associateId || null, // Optional associate ID
       contractId: req.body.contractId || null, // Optional contract ID
       avatarUrl: req.body.avatarUrl || '', // Optional avatar URL
       type: req.body.type || 'Standard', // Default type
@@ -62,6 +50,5 @@ exports.createSmartContract = async (req, res) => {
   } catch (error) {
     console.error('Error creating smart contract:', error);
     res.status(500).json({ message: 'Failed to create smart contract.' });
-    console.log(error)
   }
 };

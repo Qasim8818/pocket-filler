@@ -30,6 +30,10 @@ async function sendMail(mailOptions) {
   });
 }
 
+// Export functions for use in other controllers
+module.exports.createTransporter = createTransporter;
+module.exports.sendMail = sendMail;
+
 // Signup: register a new user and send a 4-digit verification code via email
 exports.signup = async (req, res) => {
   const { fullName, email, password } = req.body;
@@ -65,8 +69,9 @@ exports.signup = async (req, res) => {
     const organizationName = req.body.organizationName || null;
     const organizationId = req.body.organizationId || null;
 
-    // Generate unique userId
-    const userId = new mongoose.Types.ObjectId();
+    // Generate sequential userId
+    const lastUser = await Auth.findOne().sort({ userId: -1 });
+    const userId = lastUser ? lastUser.userId + 1 : 1;
 
     const user = new Auth({
       userId,
@@ -156,7 +161,16 @@ exports.organizationSignup = async (req, res) => {
       verificationCodeExpires
     );
 
+    // Generate sequential userId
+    const lastUser = await Auth.findOne().sort({ userId: -1 });
+    const userId = lastUser ? lastUser.userId + 1 : 1;
+
+    // Generate sequential organizationId
+    const lastOrg = await Auth.findOne({ organizationId: { $exists: true } }).sort({ organizationId: -1 });
+    const organizationId = lastOrg ? lastOrg.organizationId + 1 : 1;
+
     const organization = new Auth({
+      userId,
       username,
       organizationName,
       email,
@@ -184,6 +198,7 @@ exports.organizationSignup = async (req, res) => {
     res.status(201).json({
       message: "Organization registration successful. Please check your email for the verification code.",
       organization: {
+        userId: organization.userId,
         username: organization.username,
         organizationName: organization.organizationName,
         email: organization.email,
@@ -249,7 +264,7 @@ exports.organizationLogin = async (req, res) => {
 
     const token = jwt.sign(
       {
-        userId: organization._id,
+        userId: organization.userId,
         email: organization.email,
         roles: organization.roles,
         isOrganization: true,
@@ -274,6 +289,7 @@ exports.organizationLogin = async (req, res) => {
       message: "Organization login successful.",
       token,
       organization: {
+        userId: organization.userId,
         organizationName: organization.organizationName,
         email: organization.email,
         userType: "organization",
@@ -339,6 +355,49 @@ exports.verifySignupCode = async (req, res) => {
   }
 };
 
+exports.verifyEmail = async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ message: "Email is required." });
+  }
+
+  try {
+    const user = await Auth.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(200).json({ 
+        message: "Email is already verified.",
+        user: {
+          userId: user.userId,
+          email: user.email,
+          isEmailVerified: user.isEmailVerified,
+        },
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.verificationCode = null;
+    user.verificationCodeExpires = null;
+    await user.save();
+
+    res.status(200).json({
+      message: "Email verified successfully.",
+      user: {
+        userId: user.userId,
+        email: user.email,
+        isEmailVerified: user.isEmailVerified,
+      },
+    });
+  } catch (error) {
+    console.error("Email verification error:", error);
+    res.status(500).json({ message: "An error occurred during email verification." });
+  }
+};
+
 exports.login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -374,7 +433,7 @@ exports.login = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { userId: user._id, email: user.email, roles: user.roles || [] },
+      { userId: user.userId, email: user.email, roles: user.roles || [] },
       process.env.SECRETKEY,
       { expiresIn: "1h" }
     );
@@ -387,6 +446,7 @@ exports.login = async (req, res) => {
       message: "Login successful.",
       token,
       user: {
+        userId: user.userId,
         fullName: user.fullName,
         email: user.email,
         roles: user.roles,
@@ -513,7 +573,7 @@ exports.updateProfile = async (req, res) => {
     return res.status(409).json({ message: "User ID is required." });
   }
   try {
-    const user = await Auth.findById(userId);
+    const user = await Auth.findOne({ userId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -550,7 +610,7 @@ exports.updateProfile = async (req, res) => {
         organizationName: user.organizationName,
         organizationId: user.organizationId,
         isOrganization: user.isOrganization,
-        userId: user._id,
+        userId: user.userId,
         roles: user.roles || [],
         isEmailVerified: user.isEmailVerified,
         isUser: user.isUser,
@@ -571,7 +631,7 @@ exports.getProfile = async (req, res) => {
     return res.status(409).json({ message: "User ID is required." });
   }
   try {
-    const user = await Auth.findById(userId);
+    const user = await Auth.findOne({ userId: userId });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -585,7 +645,7 @@ exports.getProfile = async (req, res) => {
         organizationName: user.organizationName,
         organizationId: user.organizationId,
         isOrganization: user.isOrganization,
-        userId: user._id,
+        userId: user.userId,
         roles: user.roles || [],
         isEmailVerified: user.isEmailVerified,
         isUser: user.isUser,
@@ -604,12 +664,12 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.getOrganizationProfile = async (req, res) => {
-  const { organizationId } = req.body;
-  if (!organizationId) {
-    return res.status(400).json({ message: "Organization ID is required." });
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required." });
   }
   try {
-    const organization = await Auth.findById(organizationId);
+    const organization = await Auth.findOne({ userId: userId });
     if (!organization || !organization.isOrganization) {
       return res.status(404).json({ message: "Organization not found." });
     }

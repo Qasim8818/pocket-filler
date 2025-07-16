@@ -401,7 +401,7 @@ exports.rejectAssociate = async (req, res) => {
     return res.status(404).json({ message: "Associate ID is required." });
   }
   try {
-    const associate = await Associate.findOne({ associateId: parseInt(associateId) });
+    const associate = await Associate.findById(associateId);
     if (!associate) {
       return res.status(404).json({ message: "Associate not found." });
     }

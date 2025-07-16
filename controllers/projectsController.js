@@ -48,17 +48,42 @@ exports.addProject = async (req, res) => {
   }
 
   try {
+    // Generate sequential projectId
+    const lastProject = await Project.findOne().sort({ _id: -1 });
+    const projectId = lastProject ? (lastProject.projectId || 0) + 1 : 1;
+    
     const newProject = new Project({
+      projectId,
       title,
       type,
       description,
       date: new Date(),
       status: 'In-Progress',
+      budget: 10000, // Default budget
+      totalAmount: 10000, // Default total amount
+      currency: 'USD', // Default currency
+      startDate: new Date(), // Required field
+      endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Default to one year from now
+      contractId: 1, // Sequential ID
+      associateId: 1, // Sequential ID
+      projectManagerId: 1, // Sequential ID
+      projectType: 'Internal', // Required field with valid enum
+      projectStatus: 'Active', // Required field with valid enum
+      budgetDetails: {
+        initialBudget: 10000,
+        currentBudget: 10000,
+        spentAmount: 0,
+        remainingBudget: 10000
+      },
+      archivedByRole: 'associate', // Required field
+      deletedByRole: 'associate', // Required field
+      archivedById: 1, // Sequential ID
+      deletedById: 1, // Sequential ID
       clients: [],
       activities: [],
       chatMessages: [],
       documents: [],
-      createdBy,
+      createdBy: 1, // Sequential user ID
       organization,
     });
 

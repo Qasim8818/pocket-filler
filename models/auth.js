@@ -6,8 +6,8 @@ const authSchema = new mongoose.Schema({
         type: String,
     },
     userId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
+        type: Number,
+        unique: true,
         },
     userRole: {
         type: mongoose.Schema.Types.ObjectId,
@@ -45,8 +45,9 @@ const authSchema = new mongoose.Schema({
         default: "organization",
         },
     organizationId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Organization"
+        type: Number,
+        unique: true,
+        sparse: true
     },
     organizationName: {
         type: String,

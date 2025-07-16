@@ -39,22 +39,15 @@ exports.createSubscription = async (req, res) => {
   if (!pricing[planType] || !pricing[planType][cycle]) {
     return res.status(400).json({ message: 'Invalid planType or billingCycle' });
   }
-  // Find the Auth user by sequential userId
-  const Auth = require('../models/auth');
-  const authUser = await Auth.findOne({ userId: parseInt(userId) });
-  if (!authUser) {
-    return res.status(404).json({ message: 'User not found' });
-  }
-  
   // Check if the user already has an active subscription
-  const existingSubscription = await Subscription.findOne({ userId: authUser._id, status: 'Active' });
+  const existingSubscription = await Subscription.findOne({ userId, status: 'Active' });
   if (existingSubscription) {
     return res.status(409).json({ message: 'User already has an active subscription' });
   }
   // Create a new subscription
   const subscription = new Subscription({
     subscriptionId: new mongoose.Types.ObjectId(),
-    userId: authUser._id,
+    userId,
     planType,
     billingCycle: cycle,
     startDate: new Date(),
@@ -82,22 +75,13 @@ exports.createSubscription = async (req, res) => {
     paymentAmount: pricing[planType][cycle],
     paymentCurrency: 'USD',
     paymentDetails: '',
-    createdBy: authUser._id, // Use the authenticated user's ObjectId
-    updatedBy: authUser._id, // Use the authenticated user's ObjectId
-    updatedByRole: 'associate', // Default role
-    updatedById: authUser._id, // ID of the user who last updated the subscription
-    createdById: authUser._id, // Required field
-    createdByRole: 'associate', // Required field
-    expiredById: authUser._id, // Required field (placeholder)
-    cancelledById: authUser._id, // Required field (placeholder)
-    resumedById: authUser._id, // Required field (placeholder)
-    pausedById: authUser._id, // Required field (placeholder)
-    expiredByRole: 'associate', // Required field (placeholder)
-    cancelledByRole: 'associate', // Required field (placeholder)
-    resumedByRole: 'associate', // Required field (placeholder)
-    pausedByRole: 'associate', // Required field (placeholder)
+    createdBy: req.user._id, // Assuming the user is authenticated and their ID is
+    updatedBy: req.user._id, // Assuming the user is authenticated and their ID is available
+    updatedByRole: req.user.role || 'associate', // Assuming role is available in user
+    updatedById: req.user._id, // ID of the user who last updated the subscription
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    createdBy: req.user._id, // User who created the subscription
   });
   try {
     await subscription.save();

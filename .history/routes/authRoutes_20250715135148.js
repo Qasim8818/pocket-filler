@@ -10,9 +10,8 @@ router.post('/login', authController.login);
 router.post('/reset-password-request', authController.resetPasswordRequest); 
 router.post('/reset-password-confirm/:resetToken', authController.resetPasswordConfirm); 
 router.post('/update-profile', authController.updateProfile);
-router.post('/verify-email', authController.verifyEmail);
 
-// Organization account routev
+// Organization account routes
 router.post('/organization-signup', authController.organizationSignup);
 router.post('/organization-login', authController.organizationLogin);
 router.get('/profile', authController.getProfile);

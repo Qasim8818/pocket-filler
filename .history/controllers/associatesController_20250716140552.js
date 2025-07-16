@@ -365,7 +365,7 @@ exports.getStatus = async (req, res) => {
     if (!associate) {
       return res.status(404).json({ message: "Associate not found." });
     }
-    res.status(200).json({  status: associate.status });
+    res.status(200).json({ associate, status: associate.status });
   } catch (error) {
     console.error("Error fetching status:", error);
     res.status(500).json({ message: "Failed to fetch status." });
@@ -401,7 +401,7 @@ exports.rejectAssociate = async (req, res) => {
     return res.status(404).json({ message: "Associate ID is required." });
   }
   try {
-    const associate = await Associate.findOne({ associateId: parseInt(associateId) });
+    const associate = await Associate.findById(associateId);
     if (!associate) {
       return res.status(404).json({ message: "Associate not found." });
     }

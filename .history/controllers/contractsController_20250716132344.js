@@ -55,20 +55,7 @@ exports.addContracts = async (req, res) => {
       .json({
         message: "Contract created successfully.",
         contractId: contract.contractId,
-        contract: {
-          contractId: contract.contractId,
-          contractName: contract.contractName,
-          contractType: contract.contractType,
-          contractValue: contract.contractValue,
-          contractDuration: contract.contractDuration,
-          contractStatus: contract.contractStatus,
-          contractSigned: contract.contractSigned,
-          contractReviewed: contract.contractReviewed,
-          contractReviewedStatus: contract.contractReviewedStatus,
-          contractCreatedDate: contract.contractCreatedDate,
-          contractUpdatedDate: contract.contractUpdatedDate,
-          associates: contract.associates
-        }
+        contract: contract
       });
     console.log("Contract has been added", contract);
   } catch (error) {
@@ -88,7 +75,7 @@ exports.uploadContracts = [
       return res.status(400).json({ message: "Contract ID is required." });
     }
     try {
-      const contract = await Contract.findOne({ contractId: contractId });
+      const contract = await Contract.findById(contractId);
       if (!contract) {
         return res.status(404).json({ message: "Contract not found." });
       }
@@ -96,24 +83,7 @@ exports.uploadContracts = [
       await contract.save();
       res
         .status(200)
-        .json({ 
-          message: "Contract file uploaded successfully.", 
-          contract: {
-            contractId: contract.contractId,
-            contractName: contract.contractName,
-            contractType: contract.contractType,
-            contractFile: contract.contractFile,
-            contractValue: contract.contractValue,
-            contractDuration: contract.contractDuration,
-            contractStatus: contract.contractStatus,
-            contractSigned: contract.contractSigned,
-            contractReviewed: contract.contractReviewed,
-            contractReviewedStatus: contract.contractReviewedStatus,
-            contractCreatedDate: contract.contractCreatedDate,
-            contractUpdatedDate: contract.contractUpdatedDate,
-            associates: contract.associates
-          }
-        });
+        .json({ message: "Contract file uploaded successfully.", contract });
       console.log("Contract uploaded", contract);
     } catch (error) {
       console.error("Error uploading contract file:", error);
@@ -125,28 +95,11 @@ exports.uploadContracts = [
 exports.previewContract = async (req, res) => {
   const { contractId } = req.params;
   try {
-    const contract = await Contract.findOne({ contractId: contractId });
+    const contract = await Contract.findById(contractId);
     if (!contract) {
       return res.status(404).json({ message: "Contract not found." });
     }
-    res.status(200).json({ 
-      contract: {
-        contractId: contract.contractId,
-        contractName: contract.contractName,
-        contractType: contract.contractType,
-        contractFile: contract.contractFile,
-        signatureFile: contract.signatureFile,
-        contractValue: contract.contractValue,
-        contractDuration: contract.contractDuration,
-        contractStatus: contract.contractStatus,
-        contractSigned: contract.contractSigned,
-        contractReviewed: contract.contractReviewed,
-        contractReviewedStatus: contract.contractReviewedStatus,
-        contractCreatedDate: contract.contractCreatedDate,
-        contractUpdatedDate: contract.contractUpdatedDate,
-        associates: contract.associates
-      }
-    });
+    res.status(200).json({ contract });
   } catch (error) {
     console.error("Error fetching contract:", error);
     res.status(500).json({ message: "Failed to fetch contract." });
@@ -164,7 +117,7 @@ exports.uploadSignature = [
       return res.status(400).json({ message: "Contract ID is required." });
     }
     try {
-      const contract = await Contract.findOne({ contractId: contractId });
+      const contract = await Contract.findById(contractId);
       if (!contract) {
         return res.status(404).json({ message: "Contract not found." });
       }
@@ -187,7 +140,7 @@ exports.saveContract = async (req, res) => {
     return res.status(400).json({ message: "Contract ID is required." });
   }
   try {
-    const contract = await Contract.findOne({ contractId: contractId });
+    const contract = await Contract.findById(contractId);
     if (!contract) {
       return res.status(404).json({ message: "Contract not found." });
     }
@@ -210,7 +163,7 @@ exports.shareContract = async (req, res) => {
       });
   }
   try {
-    const contract = await Contract.findOne({ contractId: contractId });
+    const contract = await Contract.findById(contractId);
     if (!contract) {
       return res.status(404).json({ message: "Contract not found." });
     }
@@ -248,7 +201,7 @@ exports.getAllContracts = async (req, res) => {
 exports.getContractById = async (req, res) => {
   const { contractId } = req.params;
   try {
-    const contract = await Contract.findOne({ contractId: contractId });
+    const contract = await Contract.findById(contractId);
     if (!contract) {
       return res.status(404).json({ message: "Contract not found." });
     }
