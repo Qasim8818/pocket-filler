@@ -359,7 +359,7 @@ exports.removeClient = async (req, res) => {
 exports.getAssociates = async (req, res) => {
   try {
     const associates = await Associate.find();
-    res.status(200).json({ associateId, associates });
+    res.status(200).json({ associatesId, associates });
   } catch (error) {
     console.error("Error fetching associates:", error);
     res.status(500).json({ message: "Failed to fetch associates." });

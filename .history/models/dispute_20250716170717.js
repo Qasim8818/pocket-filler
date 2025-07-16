@@ -30,7 +30,6 @@ const documentSchema = new mongoose.Schema({
 });
 
 const disputeSchema = new mongoose.Schema({
-  disputeId: {type: Number, unique: true},
   projectId: { type: Number, unique: true },
   userId: { type: Number, unique: true },
   associateId: { type: Number, unique: true },

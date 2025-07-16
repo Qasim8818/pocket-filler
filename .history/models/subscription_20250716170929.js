@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const subscriptionSchema = new mongoose.Schema({
-  subscriptionId: { type: Number, umique: true },
   userId: { type: Number, unique: true },
   planType: { type: String, enum: ["Free", "Pro", "Ultimate"], required: true },
   billingCycle: {

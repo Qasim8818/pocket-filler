@@ -5,8 +5,9 @@ const activitySchema = new mongoose.Schema({
   userName: { type: String, required: true },
   userRole: { type: String, enum: ["associate", "client"], required: true }, // Role of the user performing the activity
   projectId: {
-    type: Number,
-    unique: true,
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Project",
+    required: true,
   },
   action: { type: String, required: true },
 
@@ -57,16 +58,19 @@ const projectSchema = new mongoose.Schema(
     team: [{ type: mongoose.Schema.Types.ObjectId, ref: "Auth" }],
     clients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Associate" }],
     contractId: {
-      type: Number,
-      unique: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contract",
+      required: true,
     },
     associateId: {
-      type: Number,
-      unique: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      required: true,
     },
     projectManagerId: {
-      type: Number,
-      unique: true,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      required: true,
     },
     projectType: {
       type: String,

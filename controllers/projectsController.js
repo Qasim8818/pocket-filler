@@ -159,16 +159,50 @@ exports.updateProjectDocuments = async (req, res) => {
  */
 exports.addProjectActivity = async (req, res) => {
   const { projectId } = req.params;
-  const { userId, userName, action, details } = req.body;
+  const { userId, userName, userRole, action, details } = req.body;
+  
+  // Validate required fields
+  if (!userId || !userName || !userRole || !action) {
+    return res.status(400).json({ message: 'userId, userName, userRole, and action are required.' });
+  }
+  
   try {
+    const mongoose = require('mongoose');
     const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
-    project.activities.push({ userId, userName, action, details, timestamp: new Date() });
+    
+    // Create valid ObjectId for userId if it's a sequential number
+    let userObjectId;
+    if (mongoose.isValidObjectId(userId)) {
+      userObjectId = userId;
+    } else {
+      // If userId is a sequential number, create a valid ObjectId or find the user
+      userObjectId = new mongoose.Types.ObjectId();
+    }
+    
+    // Add new activity
+    const newActivity = {
+      userId: userObjectId,
+      userName,
+      userRole,
+      projectId: project._id, // Use the project's MongoDB ObjectId
+      action,
+      details: details || '',
+      timestamp: new Date()
+    };
+    
+    project.activities.push(newActivity);
     await project.save();
-    console.log("Activity added", project.activities, project);
-    res.status(200).json({ message: 'Activity added successfully.', project });
+    
+    console.log("Activity added", newActivity);
+    res.status(200).json({ 
+      projectId: project.projectId,
+      activityId: newActivity._id,
+      message: 'Activity added successfully.', 
+      project 
+    });
   } catch (error) {
     console.error('Error adding project activity:', error);
     res.status(500).json({ message: 'Failed to add project activity.' });

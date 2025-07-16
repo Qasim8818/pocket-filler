@@ -2,10 +2,6 @@ const mongoose = require("mongoose");
 
 const smartContractSchema = new mongoose.Schema(
   {
-    smartContractId: {
-      type: Number,
-      unique: true,
-    },
     title: {
       type: String,
       required: true,

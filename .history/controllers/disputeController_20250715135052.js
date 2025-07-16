@@ -35,7 +35,6 @@ exports.submitDispute = async (req, res) => {
 
   try {
     const newDispute = new Dispute({
-      disputeId,
       projectId,
       userId,
       initialMessage,

@@ -15,7 +15,7 @@ router.post('/verify-email', authController.verifyEmail);
 // Organization account routev
 router.post('/organization-signup', authController.organizationSignup);
 router.post('/organization-login', authController.organizationLogin);
-router.get('/profile', authMiddleware, authController.getProfile);
-router.get('/organization-profile', authMiddleware, authController.getOrganizationProfile);
+router.get('/profile', authController.getProfile);
+router.get('/organization-profile',authController.getOrganizationProfile);
 
 module.exports = router;

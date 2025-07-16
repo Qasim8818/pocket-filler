@@ -626,20 +626,18 @@ exports.updateProfile = async (req, res) => {
   };
 
 exports.getProfile = async (req, res) => {
+  let userId = req.params.userId
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required." });
+  }
+  
   try {
-    // Get userId from authenticated request
-    const userId = req.user.userId;
-    
-    if (!userId) {
-      return res.status(400).json({ message: "User ID not found in token." });
-    }
-    
-    const user = await Auth.findOne({ userId: userId });
+    const user = await Auth.findOne({ userId: parseInt(userId) });
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
-    
     res.status(200).json({
+      userId: user.userId,
       message: "Profile retrieved successfully.",
       user: {
         fullName: user.fullName,
@@ -668,17 +666,14 @@ exports.getProfile = async (req, res) => {
 };
 
 exports.getOrganizationProfile = async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) {
+    return res.status(400).json({ message: "User ID is required." });
+  }
   try {
-    // Get userId from authenticated request
-    const userId = req.user.userId;
-    
-    if (!userId) {
-      return res.status(400).json({ message: "User ID not found in token." });
-    }
-    
     const organization = await Auth.findOne({ userId: userId });
     if (!organization || !organization.isOrganization) {
-      return res.status(404).json({ message: "Organization not found or user is not an organization." });
+      return res.status(404).json({ message: "Organization not found." });
     }
     res.status(200).json({
       message: "Organization profile retrieved successfully.",

@@ -227,8 +227,8 @@ exports.addClients = async (req, res) => {
       clientId: { $exists: true },
     }).sort({ associateId: -1 });
     const clientId =
-      lastClient && lastClient.clientId
-        ? lastClient.clientId + 1
+      lastClient && lastAssociate.associateId
+        ? lastAssociate.associateId + 1
         : 1;
 
     const client = new Associate({
@@ -329,7 +329,7 @@ exports.rejectClient = async (req, res) => {
 exports.getClients = async (req, res) => {
   try {
     const clients = await Associate.find();
-    res.status(200).json({ clientId, clients });
+    res.status(200).json({ clients });
   } catch (error) {
     console.error("Error fetching clients:", error);
     res.status(500).json({ message: "Failed to fetch clients." });
@@ -359,7 +359,7 @@ exports.removeClient = async (req, res) => {
 exports.getAssociates = async (req, res) => {
   try {
     const associates = await Associate.find();
-    res.status(200).json({ associateId, associates });
+    res.status(200).json({ associates });
   } catch (error) {
     console.error("Error fetching associates:", error);
     res.status(500).json({ message: "Failed to fetch associates." });
