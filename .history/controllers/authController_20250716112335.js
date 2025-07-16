@@ -65,11 +65,7 @@ exports.signup = async (req, res) => {
     const organizationName = req.body.organizationName || null;
     const organizationId = req.body.organizationId || null;
 
-    // Generate unique userId
-    const userId = new mongoose.Types.ObjectId();
-
     const user = new Auth({
-      userId,
       fullName,
       email,
       password: hashedPassword,
@@ -101,7 +97,6 @@ exports.signup = async (req, res) => {
       message:
         "Registration successful. Please check your email for the verification code.",
       user: {
-        userId: user.userId,
         fullName: user.fullName,
         email: user.email,
         isEmailVerified: user.isEmailVerified,

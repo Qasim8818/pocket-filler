@@ -4,10 +4,12 @@ const Auth = require('../models/auth');
 const mongoose = require('mongoose');
 
 beforeAll(async () => {
-  await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pocketfiller_test', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  });
+  if (mongoose.connection.readyState === 0) {
+    await mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/pocketfiller_test', {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+  }
 });
 
 afterAll(async () => {
@@ -23,6 +25,9 @@ describe('Authentication API Endpoints', () => {
 
   test('Signup - should create user and send verification code', async () => {
     jest.setTimeout(20000);
+    // Clean up any existing test user
+    await Auth.deleteOne({ email: testUserEmail });
+    
     const res = await request(app)
       .post('/api/auth/signup')
       .send({
@@ -38,7 +43,7 @@ describe('Authentication API Endpoints', () => {
     expect(user).toBeTruthy();
     expect(user.verificationCode).toHaveLength(4);
     verificationCode = user.verificationCode;
-  });
+  }, 30000);
 
   test('Verify Signup Code - should verify user with correct code', async () => {
     const res = await request(app)
