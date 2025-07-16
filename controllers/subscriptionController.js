@@ -102,7 +102,12 @@ exports.createSubscription = async (req, res) => {
   try {
     await subscription.save();
     console.log("Subscription has been created", subscription);
-    res.status(201).json({ message: 'Subscription created successfully.', subscription });
+    res.status(201).json({ 
+      subscriptionId: subscription.subscriptionId,
+      userId: subscription.userId,
+      message: 'Subscription created successfully.', 
+      subscription 
+    });
   } catch (error) {
     console.error('Error creating subscription:', error);
     res.status(500).json({ message: 'Failed to create subscription.' });

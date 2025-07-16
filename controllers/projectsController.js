@@ -48,9 +48,14 @@ exports.addProject = async (req, res) => {
   }
 
   try {
+    const mongoose = require('mongoose');
+    
     // Generate sequential projectId
     const lastProject = await Project.findOne().sort({ _id: -1 });
     const projectId = lastProject ? (lastProject.projectId || 0) + 1 : 1;
+    
+    // Create valid ObjectIds for required fields
+    const defaultObjectId = new mongoose.Types.ObjectId();
     
     const newProject = new Project({
       projectId,
@@ -64,9 +69,12 @@ exports.addProject = async (req, res) => {
       currency: 'USD', // Default currency
       startDate: new Date(), // Required field
       endDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)), // Default to one year from now
-      contractId: 1, // Sequential ID
-      associateId: 1, // Sequential ID
-      projectManagerId: 1, // Sequential ID
+      contractId: defaultObjectId, // Valid ObjectId for required field
+      associateId: defaultObjectId, // Valid ObjectId for required field
+      projectManagerId: defaultObjectId, // Valid ObjectId for required field
+      contractSequentialId: 1, // Sequential contract ID for tracking
+      associateSequentialId: 1, // Sequential associate ID for tracking
+      projectManagerSequentialId: 1, // Sequential project manager ID for tracking
       projectType: 'Internal', // Required field with valid enum
       projectStatus: 'Active', // Required field with valid enum
       budgetDetails: {
@@ -77,19 +85,26 @@ exports.addProject = async (req, res) => {
       },
       archivedByRole: 'associate', // Required field
       deletedByRole: 'associate', // Required field
-      archivedById: 1, // Sequential ID
-      deletedById: 1, // Sequential ID
+      archivedById: defaultObjectId, // Valid ObjectId
+      deletedById: defaultObjectId, // Valid ObjectId
       clients: [],
       activities: [],
       chatMessages: [],
       documents: [],
-      createdBy: 1, // Sequential user ID
+      createdBy: defaultObjectId, // Valid ObjectId
       organization,
     });
 
     await newProject.save();
 
-    res.status(201).json({ message: 'Project added successfully.', project: newProject });
+    res.status(201).json({ 
+      projectId,
+      contractSequentialId: 1,
+      associateSequentialId: 1,
+      projectManagerSequentialId: 1,
+      message: 'Project added successfully.', 
+      project: newProject 
+    });
   } catch (error) {
     console.error('Error adding project:', error);
     res.status(500).json({ message: 'Failed to add project.' });
@@ -102,11 +117,14 @@ exports.addProject = async (req, res) => {
 exports.getProjectDetails = async (req, res) => {
   const { projectId } = req.params;
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
-    res.status(200).json({ project });
+    res.status(200).json({ 
+      projectId: project.projectId,
+      project 
+    });
   } catch (error) {
     console.error('Error getting project details:', error);
     res.status(500).json({ message: 'Failed to get project details.' });
@@ -120,7 +138,7 @@ exports.updateProjectDocuments = async (req, res) => {
   const { projectId } = req.params;
   const { documents } = req.body; // array of document URLs
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
@@ -143,7 +161,7 @@ exports.addProjectActivity = async (req, res) => {
   const { projectId } = req.params;
   const { userId, userName, action, details } = req.body;
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
@@ -158,12 +176,58 @@ exports.addProjectActivity = async (req, res) => {
 };
 
 /**
+ * Add a client to a project
+ */
+exports.addClient = async (req, res) => {
+  const { projectId } = req.params;
+  const { name, email, avatarUrl } = req.body;
+  
+  if (!name || !email) {
+    return res.status(400).json({ message: 'Client name and email are required.' });
+  }
+  
+  try {
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
+    if (!project) {
+      return res.status(404).json({ message: 'Project not found.' });
+    }
+    
+    // Check if client already exists in the project
+    const clientExists = project.clients.some(client => client.email === email);
+    if (clientExists) {
+      return res.status(409).json({ message: 'Client already exists in this project.' });
+    }
+    
+    // Add new client
+    const newClient = {
+      name,
+      email,
+      avatarUrl: avatarUrl || ''
+    };
+    
+    project.clients.push(newClient);
+    await project.save();
+    
+    console.log("Client added to project", newClient);
+    res.status(200).json({ 
+      projectId: project.projectId,
+      clientId: newClient._id,
+      message: 'Client added successfully.', 
+      project 
+    });
+  } catch (error) {
+    console.error('Error adding client to project:', error);
+    res.status(500).json({ message: 'Failed to add client.' });
+  }
+};
+
+/**
  * Remove client from project
  */
 exports.removeClient = async (req, res) => {
   const { projectId, clientEmail } = req.body;
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
@@ -197,7 +261,7 @@ exports.sendChatMessage = async (req, res) => {
   }
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }
@@ -230,7 +294,7 @@ exports.getChatMessages = async (req, res) => {
   }
 
   try {
-    const project = await Project.findById(projectId);
+    const project = await Project.findOne({ projectId: parseInt(projectId) });
     if (!project) {
       return res.status(404).json({ message: 'Project not found.' });
     }

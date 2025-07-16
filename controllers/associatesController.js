@@ -183,7 +183,11 @@ exports.addManually = async (req, res) => {
     // Save the associate to the database
     await associate.save();
     console.log("associate added manually", associate);
-    res.status(200).json({ message: "Associate added manually.", associate });
+    res.status(200).json({ 
+      associateId: associate.associateId,
+      message: "Associate added manually.", 
+      associate 
+    });
   } catch (error) {
     console.error("Error adding associate manually:", error);
     res.status(500).json({ message: "Failed to add associate manually." });
@@ -262,7 +266,11 @@ exports.acceptClient = async (req, res) => {
 
     await client.save();
     console.log("client accepted", client);
-    res.status(200).json({ message: "Client request accepted.", client });
+    res.status(200).json({ 
+      clientId: client._id,
+      message: "Client request accepted.", 
+      client 
+    });
   } catch (error) {
     console.error("Error accepting client:", error);
     res.status(500).json({ message: "Failed to accept client." });
@@ -365,7 +373,10 @@ exports.getStatus = async (req, res) => {
     if (!associate) {
       return res.status(404).json({ message: "Associate not found." });
     }
-    res.status(200).json({  status: associate.status });
+    res.status(200).json({ 
+      associateId: associate.associateId,
+      status: associate.status 
+    });
   } catch (error) {
     console.error("Error fetching status:", error);
     res.status(500).json({ message: "Failed to fetch status." });
@@ -388,7 +399,11 @@ exports.acceptAssociate = async (req, res) => {
     associate.status = "accepted";
     await associate.save();
     console.log("associate has been accepted", associate);
-    res.status(200).json({ message: "Associate request accepted.", associate });
+    res.status(200).json({ 
+      associateId: associate.associateId,
+      message: "Associate request accepted.", 
+      associate 
+    });
   } catch (error) {
     console.error("Error accepting associate:", error);
     res.status(500).json({ message: "Failed to accept associate." });

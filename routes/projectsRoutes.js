@@ -17,6 +17,9 @@ router.post('/updateDocuments/:projectId', projectsController.updateProjectDocum
 // Route to add an activity to a project by project ID
 router.post('/addActivity/:projectId', projectsController.addProjectActivity);
 
+// Route to add a client to a project
+router.post('/addClient/:projectId', projectsController.addClient);
+
 // Route to remove a client from a project
 router.post('/removeClient', projectsController.removeClient);
 
