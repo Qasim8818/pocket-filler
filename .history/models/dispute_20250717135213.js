@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const messageSchema = new mongoose.Schema({
-  senderId: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
+  senderId: { type: Number, required: true },
   message: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
 });
@@ -17,21 +17,22 @@ const documentSchema = new mongoose.Schema({
   description: { type: String, default: "" },
   type: { type: String, enum: ["pdf", "image", "doc"], default: "pdf" },
   size: { type: Number, required: true },
-  filename: { type: String, required: true },
+  Filename: { type: String, required: true },
   uploadedByRole: {
     type: String,
     enum: ["associate", "client"],
     required: true,
   },
+  uploadedById: { type: Number, unique: true },
 });
 
 const disputeSchema = new mongoose.Schema(
   {
     disputeId: { type: Number, unique: true },
-    projectId: { type: mongoose.Schema.Types.ObjectId, ref: "Project" },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
-    associateId: { type: mongoose.Schema.Types.ObjectId, ref: "Associate" },
-    contractId: { type: mongoose.Schema.Types.ObjectId, ref: "Contract" },
+    projectId: { type: Number, unique: true },
+    userId: { type: Number, unique: true },
+    associateId: { type: Number, unique: true },
+    contractId: { type: Number, unique: true },
     title: { type: String, required: true },
     initialMessage: { type: String, required: true },
     status: {
@@ -41,6 +42,8 @@ const disputeSchema = new mongoose.Schema(
     },
     messages: [messageSchema],
     documents: [documentSchema],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now },
   },
   {
     timestamps: true,

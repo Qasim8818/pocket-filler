@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const activitySchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "Auth", required: true },
+  userId: { type: Number, unique: true },
   userName: { type: String, required: true },
   userRole: { type: String, enum: ["associate", "client"], required: true },
-  projectId: { type: mongoose.Schema.Types.ObjectId, ref: "Project", required: true },
+  projectId: { type: Number, unique: true },
   action: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
   details: { type: String },
@@ -21,6 +21,18 @@ const clientSchema = new mongoose.Schema({
   avatarUrl: { type: String },
 });
 
+const chatMessageSchema = new mongoose.Schema({
+  senderId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Auth",
+    required: true,
+  },
+  senderName: { type: String, required: true },
+  message: { type: String, required: true },
+  messageType: { type: String, enum: ["text", "call"], default: "text" },
+  timestamp: { type: Date, default: Date.now },
+});
+
 const projectSchema = new mongoose.Schema(
   {
     projectId: { type: Number, unique: true },
@@ -34,13 +46,15 @@ const projectSchema = new mongoose.Schema(
     },
     description: { type: String, required: true },
     budget: { type: Number, required: true },
+    totalAmount: { type: Number, required: true },
+    currency: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     team: [{ type: mongoose.Schema.Types.ObjectId, ref: "Auth" }],
     clients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Associate" }],
-    contractId: { type: mongoose.Schema.Types.ObjectId, ref: "Contract" },
-    associateId: { type: mongoose.Schema.Types.ObjectId, ref: "Associate" },
-    projectManagerId: { type: mongoose.Schema.Types.ObjectId, ref: "Associate" },
+    contractId: { type: Number, unique: true },
+    associateId: { type: Number, unique: true },
+    projectManagerId: { type: Number, unique: true },
     projectType: {
       type: String,
       enum: ["Internal", "External"],
@@ -56,7 +70,28 @@ const projectSchema = new mongoose.Schema(
       enum: ["Low", "Medium", "High"],
       default: "Medium",
     },
+    tags: [{ type: String }],
+    milestones: [{ type: String }],
+    budgetDetails: {
+      initialBudget: { type: Number, required: true },
+      currentBudget: { type: Number, required: true },
+      spentAmount: { type: Number, required: true },
+      remainingBudget: { type: Number, required: true },
+    },
     progress: { type: Number, default: 0, min: 0, max: 100 },
+    files: [documentSchema],
+    comments: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Auth",
+          required: true,
+        },
+        comment: { type: String, required: true },
+        timestamp: { type: Date, default: Date.now },
+      },
+    ],
+    chatMessages: [chatMessageSchema],
     activities: [activitySchema],
     documents: [documentSchema],
     clients: [clientSchema],
@@ -68,7 +103,31 @@ const projectSchema = new mongoose.Schema(
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Auth" },
     isArchived: { type: Boolean, default: false },
     isDeleted: { type: Boolean, default: false },
+    archivedAt: { type: Date },
+    deletedAt: { type: Date },
+    archivedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Auth" },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: "Auth" },
     isActive: { type: Boolean, default: true },
+    archivedByRole: {
+      type: String,
+      enum: ["associate", "client"],
+      required: true,
+    },
+    deletedByRole: {
+      type: String,
+      enum: ["associate", "client"],
+      required: true,
+    },
+    archivedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      required: true,
+    },
+    deletedById: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Auth",
+      required: true,
+    },
   },
   {
     timestamps: true,
